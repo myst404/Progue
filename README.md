@@ -11,10 +11,6 @@ Choose a probe with a SSID which sounds like there was no authentication (FreeWi
 
 <p>Progue has been tested and works on <strong>Kali Linux</strong>. However it should work on other OSs since you can put your wireless card into monitor mode.</p>
 
-<p></p>
-<p></p>
-<p></p>
-<p></p>
 
 <h3>How it works</h3>
 
@@ -44,21 +40,9 @@ Choose a probe with a SSID which sounds like there was no authentication (FreeWi
 </ol>
 
 
-<code>
-root@name:~/Desktop# ./progue.py --help <br />
-usage: progue.py [-h] [-m MONITOR_INTERFACE] [-i INTERNET_INTERFACE] [-s SSID]  
+<p>For some help:</p>
 
-optional arguments:  
--h, --help            show this help message and exit  
-  
-  -m MONITOR_INTERFACE, --monitor_interface MONITOR_INTERFACE<br />
-                        Specify wireless interface in monitor mode (wlan0mon by default) .<br />
-  -i INTERNET_INTERFACE, --internet_interface INTERNET_INTERFACE <br />
-                        Specify interface on which you have Internet (eth0 by default). <br />
-  -s SSID, --SSID SSID  No probe request reader, directly fire up the Rogue AP with the specified SSID. <br />
-                        
-</code>
-
+<code>root@name:~/Desktop# ./progue.py --help</code>
 
 
 <h3>Requirements</h3>
