@@ -46,9 +46,9 @@ Choose a probe with a SSID which sounds like there was no authentication (FreeWi
 
 <code>
 root@name:~/Desktop# ./progue.py --help <br />
-usage: progue.py [-h] [-m MONITOR_INTERFACE] [-i INTERNET_INTERFACE] [-s SSID] <br />
+usage: progue.py [-h] [-m MONITOR_INTERFACE] [-i INTERNET_INTERFACE] [-s SSID]  
 
-optional arguments:<br />
+optional arguments:  
   -h, --help            show this help message and exit<br />
   -m MONITOR_INTERFACE, --monitor_interface MONITOR_INTERFACE<br />
                         Specify wireless interface in monitor mode (wlan0mon by default) .<br />
