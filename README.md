@@ -14,6 +14,11 @@ Choose a probe with a SSID which sounds like there was no authentication (FreeWi
 
 <h3>How it works</h3>
 
+<p>First of all, put your wireless card into monitor mode:</p>
+<code>airmon-ng check kill</code>
+<code>airmon-ng start wlan0</code>
+
+
 <p>Progue can work in 2 different modes:</p>
 
 <p>1. With probe reader:</p>
