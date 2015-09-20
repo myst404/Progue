@@ -44,11 +44,30 @@ Choose a probe with a SSID which sounds like there was no authentication (FreeWi
 </ol>
 
 
+<code>
+root@name:~/Desktop# ./progue.py --help
+usage: progue.py [-h] [-m MONITOR_INTERFACE] [-i INTERNET_INTERFACE] [-s SSID]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -m MONITOR_INTERFACE, --monitor_interface MONITOR_INTERFACE
+                        Specify wireless interface in monitor mode (wlan0mon
+                        by default).
+  -i INTERNET_INTERFACE, --internet_interface INTERNET_INTERFACE
+                        Specify interface on which you have Internet (eth0 by
+                        default).
+  -s SSID, --SSID SSID  No probe request reader, directly fire up the Rogue AP
+                        with the specified SSID.
+                        
+</code>
+
+
+
 <h3>Requirements</h3>
 
 <ul>
 <li>1 wireless interface in monitor mode (wlan0mon by default) and 1 interface with internet (eth0 by default)</li>
-<li>The following programs installed : python, scapy, aircrack-ng, udhcpd  
+<li>The following programs installed : python, scapy, aircrack-ng, udhcpd.  
 To be sure just perform : <code>apt-get install python scapy aircrack-ng udhcpd</code></li>
 </ul>
 
