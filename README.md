@@ -49,7 +49,8 @@ root@name:~/Desktop# ./progue.py --help <br />
 usage: progue.py [-h] [-m MONITOR_INTERFACE] [-i INTERNET_INTERFACE] [-s SSID]  
 
 optional arguments:  
-  -h, --help            show this help message and exit<br />
+-h, --help            show this help message and exit  
+  
   -m MONITOR_INTERFACE, --monitor_interface MONITOR_INTERFACE<br />
                         Specify wireless interface in monitor mode (wlan0mon by default) .<br />
   -i INTERNET_INTERFACE, --internet_interface INTERNET_INTERFACE <br />
