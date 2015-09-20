@@ -16,6 +16,7 @@ Choose a probe with a SSID which sounds like there was no authentication (FreeWi
 
 <p>First of all, put your wireless card into monitor mode:</p>
 <code>airmon-ng check kill</code>
+<p></p>
 <code>airmon-ng start wlan0</code>
 
 
