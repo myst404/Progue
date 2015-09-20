@@ -81,4 +81,3 @@ To be sure just perform : <code>apt-get install python scapy aircrack-ng udhcpd<
 This tool is published in good faith and for general information purpose only.  
 Cain & Abel has been developed in the hope that it will be useful for network administrators, teachers, security consultants/professionals, forensic staff, security software vendors, professional penetration tester and everyone else that plans to use it for ethical reasons.  
 The author will not help or support any illegal activity done with this program. Be warned that there is the possibility that you will cause damages and/or loss of data using this software and that in no events shall the author be liable for such damages or loss of data.</p>
-
