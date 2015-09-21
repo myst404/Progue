@@ -31,7 +31,7 @@ Choose a probe with a SSID which sounds like there was no authentication (FreeWi
 <li>Select which # you would like to attack</li>
 <li>The Rogue AP is automatically fired up with the name selected/li>
 <li>Wait for clients to connect automatically or on prupose!</li>
-<li>Open your favorite tools like sslstrip or Wireshark on at0</li>
+<li>Open your favorite tools like Wireshark on at0 or sslstrip</li>
 </ol>
 
 
@@ -42,7 +42,7 @@ Choose a probe with a SSID which sounds like there was no authentication (FreeWi
 <li>Fire up the program with the argument: "-s SSID_FROM_THE_ROGUE_AP" </li>
 <li>The Rogue AP is automatically fired up with the name selected/li>
 <li>Wait for clients to connect automatically or on purpose!</li>
-<li>Open your favorite tools like sslstrip or Wireshark on at0</li>
+<li>Open your favorite tools like Wireshark on at0 or sslstrip</li>
 </ol>
 
 

