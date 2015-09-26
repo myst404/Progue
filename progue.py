@@ -199,9 +199,9 @@ def exploitation(): #Not used for the moment
 def main():
     """Main"""
     
-    internet_interface = "eth0"
-    monitor_interface = "wlan0mon"
-    ssid_to_attack = "FreeWifi"
+    internet_interface = "eth0"      #Default Monitor Interface
+    monitor_interface = "wlan0mon"   #Default Internet Interface
+    ssid_to_attack = "FreeWifi"      #Default SSID
     
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--monitor_interface", 
